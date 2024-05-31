@@ -54,12 +54,22 @@ Then you can compress the backup and encrypt it with GPG, or use an archiving ex
 
 It is also a good idea to create a systemd timer for auto backup, akin to restic backup
 
+### Important note
+
+If your backup directory is located on the same filesystem as the directory you're backing up then in order to preserve space and minimize disk wear out, it is preferrable to create hard links for files instead of copying them, like:
+
+```
+rsync -aAXHhv --filter="merge /path/to/filter.filter" --delete --link-dest=/what/to/backup /what/to/backup /where/to/store/backup 
+```
+
+where `--link-dest` is the path to directory we're backing up *relative* to the destination
+
 ### Example:
 
 Backup:
 
 ```
-sudo rsync -aAXHhv --filter="merge /etc/rsync/excludes.filter" / /backups/rsync_backup/ --delete
+sudo rsync -aAXHhv --filter="merge /etc/rsync/excludes.filter" --delete --link-dest=/ / /backups/rsync_backup/
 ```
 
 Archive and encrypt using tar and gpg:
