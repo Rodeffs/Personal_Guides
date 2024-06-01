@@ -1,35 +1,68 @@
 # Restic
 
-To open repository, use:
+[Archwiki page on Restic](https://wiki.archlinux.org/title/Restic)
+
+You can make auto-backups by configuring systemd timer and systemd service and a script to run with all needed options in /usr/local/bin
+
+Example for the script:
 
 ```
-sudo restic -r repository_location -p password_file option
+#!/bin/bash
+
+if [[ -n $(pgrep 'restic' | grep 'restic backup') ]]; then
+  echo 'restic is already running...' 1>&2
+  exit 0
+fi
+
+set -e
+set -v
+
+export RESTIC_REPOSITORY='/where/is/your/repo'
+export RESTIC_PASSWORD_FILE='/file/which/contains/password'
+export RESTIC_EXCLUDE_FILE='/file/which/contains/excluded/files'
+export RESTIC_COMPRESSION='auto'
+export RESTIC_CACHE_DIR='/where/to/store/cache'
+
+mkdir -p "${RESTIC_CACHE_DIR}"
+
+restic unlock -r ${RESTIC_REPOSITORY}
+restic backup / -r ${RESTIC_REPOSITORY} --password-file=${RESTIC_PASSWORD_FILE} --exclude-file=${RESTIC_EXCLUDE_FILE} --tag scheduled 
+restic check -r ${RESTIC_REPOSITORY} --with-cache --cache-dir=${RESTIC_CACHE_DIR} --read-data-subset=5G
+restic forget --prune --keep-daily 7
 ```
 
-for me:
-
-- repository_location is /backups/restic_backup
-- password_file is /usr/local/bin/get-restic-password
-
-You can also make auto-backups by configuring systemd timer and systemd service and a script to run with all needed options in /usr/local/bin/restic-backup. If you have done so, then you can make a backup simply by running:
+Example for systemd service:
 
 ```
-sudo restic-backup
+[Unit]
+Description=Backup system using restic
+
+[Service]
+ExecStart=systemd-inhibit /usr/local/bin/restic-backup
 ```
 
-To list possible options run:
+Example for systemd timer:
 
 ```
-restic --help
+[Unit]
+Description=Timer for full system backups using restic
+
+[Timer]
+OnCalendar=daily
+AccuracySec=1us
+RandomizedDelaySec=1hour
+Persistent=true
+Unit=restic-backup.service
+
+[Install]
+WantedBy=timers.target
 ```
 
-or read manual for restic or a specific command:
+To browse the repo, mount it to somewhere, like:
 
 ```
-man restic
-man restic-command
+restic -r repository_location -p password_file mount /mnt/
 ```
-
 
 # Rsync
 
