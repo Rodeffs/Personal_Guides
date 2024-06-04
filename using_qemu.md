@@ -1,8 +1,8 @@
 # [ArchWiki article on QEMU](https://wiki.archlinux.org/title/QEMU)
 
-### 1. First, download an iso file for a desired OS
+### 1. Download an iso file for a desired OS
 
-### 2. Then create a hard-disk image
+### 2. Create a hard-disk image
 
 ```
 qemu-img create -f format_type image_file.img size
@@ -14,7 +14,7 @@ where *format_type* stands for either *raw* or *qcow2*, difference being:
 - *raw* allocates all the space it was given, however, it's faster to access by guest OS
 
 
-### 3. After that mount the iso file to the image file
+### 3. Install the OS
 
 ```
 qemu-system-x86_64 -cdrom image.iso -boot order=d -cpu host -m mem_amount -accel kvm -smp cores_amount -device virtio-vga-gl -display display_type,gl=on -monitor stdio -drive file=image_file.img,format=format_type
@@ -33,7 +33,7 @@ where:
 
 This step will also boot you into the live installment 
 
-### 4. The last step is to run the OS
+### 4. Run the OS
 
 ```
 qemu-system-x86_64 -cpu host -m mem_amount -accel kvm -smp cores_amount -device virtio-vga-gl -display [display],gl=on -monitor stdio -nic user,id=nic0,smb=path/to/shared_dir -drive file=image_file.img,format=format_type -audio driver=driver_name,model=model_name,id=id_name
@@ -48,7 +48,9 @@ where:
 
 ### Optionally
 
-To disable networking completely on the guest add switch `-nic none`
+To disable networking completely on the guest add switch `-nic none
+
+If running Windows guest, then in order to optimise performance, modify the cpu flag like this: `-cpu host,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time`
 
 ### Example
 
@@ -80,12 +82,14 @@ exec qemu-system-x86_64 -cpu host -m 4G -accel kvm -smp 4 -device virtio-vga-gl 
 
 ### Creating snapshots
 
-Snapshots are only available for qcow2 formats. To create a snapshot run:
+Snapshots are only available for qcow2 formats. To create a snapshot, just append a `-snapshot` flag to the command described in *Run the OS* section. This will create a snapshot in the RAM and all of the changes will be discarded after the OS is shut down.
+
+To make a persistant snapshot:
 
 ```
 qemu-img create -f qcow2 -b original.img -F qcow2 snapshot.img
 ```
 
-Now any changes to snapshot.img **will not be redirected** to original.img. If you want to preserve the snapshot, **DO NOT** change anything in the original image or else the snapshot image **WILL BE CORRUPTED**. Returning to previous version of the snapshot is **not possible**, so just delete it and create new.
+Now any changes to snapshot.img **will not be redirected** to original.img. If you want to preserve the snapshot, **DO NOT** change anything in the original image or else the snapshot image **WILL BE CORRUPTED**. Returning to previous version of the snapshot is **not possible**, so just delete it and create new. 
 
 For instance, if I corrupt my system in a snapshot, the original image will be completely unaffected, so I can just delete the snapshot and make a new one to undo everything. However, if my original image is corrupted, then all snapshots will be too.
