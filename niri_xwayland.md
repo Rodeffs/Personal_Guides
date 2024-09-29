@@ -6,6 +6,12 @@ To launch X11 apps, first you need to launch Xwayland itself in a separate shell
 Xwayland
 ```
 
+If you're using a monitor with high resolution, use:
+
+```
+Xwayland -hidpi
+```
+
 Then you'll need to launch any X11 window manager on a DISPLAY, again in a separate shell, e.g. for kwin_x11:
 
 ```
