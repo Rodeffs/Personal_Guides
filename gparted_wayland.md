@@ -1,15 +1,27 @@
-For some unknown reason, I can't run gparted on Wayland, because after I authorise, I get this:
+Running GUI applications with root will not work on Wayland by default. To circumvent this, e.g. to run gparted, use one of the following:
+
+1. Execute (this will pass your environmental variables to the root):
 
 ```
-(gpartedbin:7586): Gtk-WARNING **: 06:58:13.689: cannot open display: :0
+sudo -E gparted
 ```
 
-This error occurs even when I run gparted with sudo, but strangely this works without errors:
+2. Execute:
 
 ```
 su -c gparted
 ```
 
-This even launches a window on Wayland without the need of an X server
+3. Install *xorg-xhost* and execute:
 
-Alternatively, I can install *xorg-xhost*, run Xwayland, open a X11 window manager and then gparted will run properly, but in X11, not on Wayland
+```
+xhost si:localuser:root
+```
+
+before launching the application itself. After that, execute:
+
+```
+xhost -si:localuser:root
+```
+
+to remove access
